@@ -68,38 +68,41 @@ function nextCard() {
   }).then(async () => {
     game.nextCard()
     
-    // Wait for Vue to update DOM with new card, then flip
+    // Wait for Vue to update DOM - use requestAnimationFrame + nextTick
     if (autoFlip.value) {
       await nextTick()
       
-      setTimeout(() => {
-        // Use GSAP to animate flip from 0 -> 180
+      requestAnimationFrame(async () => {
+        // Wait another frame for DOM to settle
+        await new Promise(r => setTimeout(r, 50))
+        
         const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
         if (cardInner) {
-          // Temporarily disable CSS transition during GSAP animation
+          // Disable CSS, reset to 0
           cardInner.style.transition = 'none'
           cardInner.style.transform = 'rotateY(0deg)'
           
           // Force reflow
-          cardInner.offsetHeight
-            
-          // Animate flip with GSAP
-          gsap.to(cardInner, {
-            rotationY: 180,
-            duration: 0.5,
-            ease: 'power2.inOut',
-            onComplete: () => {
-              // Re-enable CSS transition for next flip
-              cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-              game.flipCard()
+          void cardInner.offsetWidth
+          
+          // Animate flip with GSAP - from 0 to 180
+          gsap.fromTo(cardInner, 
+            { rotationY: 0 },
+            {
+              rotationY: 180,
+              duration: 0.6,
+              ease: 'power2.inOut',
+              onComplete: () => {
+                cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                game.flipCard()
+              }
             }
-          })
+          )
         } else {
           game.flipCard()
         }
-      }, 150)
+      })
     }
-    // autoFlip OFF: new card stays face-down
     
     isThrowing.value = false
     if (cardRef.value) {

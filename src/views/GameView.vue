@@ -6,7 +6,6 @@ import { usePreferencesStore } from '@/stores/settings'
 import { CATEGORIES } from '@/types'
 import { ArrowLeft, Volume2, VolumeX, RefreshCw, X, Zap } from 'lucide-vue-next'
 import { animate } from 'animejs'
-import gsap from 'gsap'
 
 const router = useRouter()
 const game = useGameStore()
@@ -44,7 +43,7 @@ function nextCard() {
   if (isThrowing.value || !cardRef.value) return
   isThrowing.value = true
 
-  // Reset flip state first to prevent CSS conflict
+  // Reset flip state - new card starts face-down
   game.isFlipped = false
 
   animate(cardRef.value, {
@@ -68,47 +67,47 @@ function nextCard() {
   }).then(async () => {
     game.nextCard()
     
-    // Wait for Vue to update DOM - use requestAnimationFrame + nextTick
-    if (autoFlip.value) {
-      await nextTick()
-      
-      requestAnimationFrame(async () => {
-        // Wait another frame for DOM to settle
-        await new Promise(r => setTimeout(r, 50))
-        
-        const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
-        if (cardInner) {
-          // Disable CSS, reset to 0
-          cardInner.style.transition = 'none'
-          cardInner.style.transform = 'rotateY(0deg)'
-          
-          // Force reflow
-          void cardInner.offsetWidth
-          
-          // Animate flip with GSAP - from 0 to 180
-          gsap.fromTo(cardInner, 
-            { rotationY: 0 },
-            {
-              rotationY: 180,
-              duration: 0.6,
-              ease: 'power2.inOut',
-              onComplete: () => {
-                cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-                game.flipCard()
-              }
-            }
-          )
-        } else {
-          game.flipCard()
-        }
-      })
-    }
-    
-    isThrowing.value = false
+    // Reset card styles after throw
     if (cardRef.value) {
       cardRef.value.style.transform = 'translateX(0) translateY(0) rotate(0deg)'
       cardRef.value.style.opacity = '1'
     }
+
+    // Flip animation using CSS
+    if (autoFlip.value) {
+      await nextTick()
+      
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
+      if (cardInner) {
+        // Reset and trigger CSS animation
+        cardInner.classList.remove('flipped')
+        cardInner.style.transform = 'rotateY(0deg)'
+        
+        // Force reflow
+        void cardInner.offsetWidth
+        
+        // Add animation class
+        cardInner.classList.add('animate-flip')
+        
+        // Wait for animation to complete
+        await new Promise(resolve => {
+          const handler = () => {
+            cardInner.removeEventListener('animationend', handler)
+            resolve(true)
+          }
+          cardInner.addEventListener('animationend', handler)
+        })
+        
+        // Set flipped state
+        cardInner.classList.add('flipped')
+        cardInner.classList.remove('animate-flip')
+        game.flipCard()
+      }
+    }
+    
+    isThrowing.value = false
   })
 }
 
@@ -378,6 +377,19 @@ onUnmounted(() => {
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-inner.animate-flip {
+  animation: flipCard 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes flipCard {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
 }
 
 .card-container.flipped .card-inner {

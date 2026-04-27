@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { usePreferencesStore } from '@/stores/settings'
 import { CATEGORIES } from '@/types'
-import { ArrowLeft, Volume2, VolumeX, RefreshCw, X } from 'lucide-vue-next'
+import { ArrowLeft, Volume2, VolumeX, RefreshCw, X, Zap } from 'lucide-vue-next'
 
 const router = useRouter()
 const game = useGameStore()
@@ -12,6 +12,12 @@ const prefs = usePreferencesStore()
 
 const showEndModal = ref(false)
 const isThrowing = ref(false)
+const autoFlip = ref(localStorage.getItem('auto-flip') !== 'false')
+
+function toggleAutoFlip() {
+  autoFlip.value = !autoFlip.value
+  localStorage.setItem('auto-flip', autoFlip.value.toString())
+}
 
 const currentCategory = computed(() => {
   if (!game.currentCard) return null
@@ -36,6 +42,9 @@ function nextCard() {
   isThrowing.value = true
   setTimeout(() => {
     game.nextCard()
+    if (autoFlip.value) {
+      game.flipCard()
+    }
     isThrowing.value = false
   }, 400)
 }
@@ -103,6 +112,10 @@ onUnmounted(() => {
       <button class="header-btn" @click="prefs.toggleSound()">
         <Volume2 v-if="prefs.soundEnabled" :size="24" />
         <VolumeX v-else :size="24" />
+      </button>
+      <button class="header-btn" :class="{ 'auto-flip-on': autoFlip }" @click="toggleAutoFlip" :title="autoFlip ? 'Tự động lật: Bật' : 'Tự động lật: Tắt'">
+        <Zap :size="20" />
+        <span class="auto-flip-label">Tự động lật</span>
       </button>
     </header>
 
@@ -215,6 +228,15 @@ onUnmounted(() => {
 
 .header-btn:hover {
   background: var(--color-surface);
+}
+
+.header-btn.auto-flip-on {
+  color: var(--color-accent-primary);
+}
+
+.auto-flip-label {
+  font-size: 0.7rem;
+  margin-left: 4px;
 }
 
 .progress-info {

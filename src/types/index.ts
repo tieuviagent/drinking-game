@@ -1,4 +1,4 @@
-export type Category = 'couple' | 'family' | 'friend' | 'troll' | 'hot'
+export type Category = 'couple' | 'family' | 'friend' | 'troll' | 'hot' | 'xxs'
 
 export interface Card {
   id: string
@@ -75,5 +75,12 @@ export const CATEGORIES: CategoryInfo[] = [
     icon: '🔥',
     description: 'Bold,大胆, gây ngại',
     color: '#F97316'
+  },
+  {
+    id: 'xxs',
+    name: '18+',
+    icon: '🍆',
+    description: 'Nhạy cảm, chỉ người lớn',
+    color: '#EC4899'
   }
 ]

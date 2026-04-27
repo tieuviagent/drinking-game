@@ -7,13 +7,15 @@ import * as familyCards from '@/data/family'
 import * as friendCards from '@/data/friend'
 import * as trollCards from '@/data/troll'
 import * as hotCards from '@/data/hot'
+import * as xxsCards from '@/data/xxs'
 
 const CARD_IMPORTS = {
   couple: coupleCards,
   family: familyCards,
   friend: friendCards,
   troll: trollCards,
-  hot: hotCards
+  hot: hotCards,
+  xxs: xxsCards
 }
 
 const STORAGE_KEY = 'drinking-game-state'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { usePreferencesStore } from '@/stores/settings'
@@ -61,21 +61,19 @@ function nextCard() {
       { value: 0, duration: 300 }
     ],
     easing: 'easeOutQuad',
-  }).then(() => {
+  }).then(async () => {
     game.nextCard()
     
     // Wait for Vue to update DOM with new card, then flip
     if (autoFlip.value) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Add flipped class to trigger CSS transition
-          const newCardContainer = document.querySelector('.card-container') as HTMLElement
-          if (newCardContainer) {
-            newCardContainer.classList.add('flipped')
-          }
-          game.flipCard()
-        })
-      })
+      await nextTick()
+      // Small delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        if (cardRef.value) {
+          cardRef.value.classList.add('flipped')
+        }
+        game.flipCard()
+      }, 100)
     }
     // autoFlip OFF: new card stays face-down
     

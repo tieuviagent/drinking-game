@@ -5,6 +5,7 @@ import { useGameStore } from '@/stores/game'
 import { usePreferencesStore } from '@/stores/settings'
 import { CATEGORIES } from '@/types'
 import { ArrowLeft, Volume2, VolumeX, RefreshCw, X, Zap } from 'lucide-vue-next'
+import { animate } from 'animejs'
 
 const router = useRouter()
 const game = useGameStore()
@@ -13,6 +14,7 @@ const prefs = usePreferencesStore()
 const showEndModal = ref(false)
 const isThrowing = ref(false)
 const autoFlip = ref(localStorage.getItem('auto-flip') !== 'false')
+const cardRef = ref<HTMLElement | null>(null)
 
 function toggleAutoFlip() {
   autoFlip.value = !autoFlip.value
@@ -38,15 +40,38 @@ function flipAndShow() {
 }
 
 function nextCard() {
-  if (isThrowing.value) return
+  if (isThrowing.value || !cardRef.value) return
   isThrowing.value = true
-  setTimeout(() => {
+
+  animate(cardRef.value, {
+    translateX: [
+      { value: 150, duration: 200 },
+      { value: 300, duration: 300 }
+    ],
+    translateY: [
+      { value: -100, duration: 200 },
+      { value: -200, duration: 300 }
+    ],
+    rotate: [
+      { value: 15, duration: 200 },
+      { value: 30, duration: 300 }
+    ],
+    opacity: [
+      { value: 1, duration: 200 },
+      { value: 0, duration: 300 }
+    ],
+    easing: 'easeOutQuad',
+  }).then(() => {
     game.nextCard()
     if (autoFlip.value) {
       game.flipCard()
     }
     isThrowing.value = false
-  }, 400)
+    if (cardRef.value) {
+      cardRef.value.style.transform = 'translateX(0) translateY(0) rotate(0deg)'
+      cardRef.value.style.opacity = '1'
+    }
+  })
 }
 
 function reshuffle() {
@@ -132,6 +157,7 @@ onUnmounted(() => {
         :class="{ flipped: game.isFlipped, throwing: isThrowing }"
         :style="cardStyle"
         @click="handleCardClick"
+        ref="cardRef"
       >
         <div class="card-inner">
           <!-- Card Back -->
@@ -152,6 +178,15 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Deck -->
+      <div class="deck-container">
+        <div class="deck-stack">
+          <div class="deck-card deck-card-3"></div>
+          <div class="deck-card deck-card-2"></div>
+          <div class="deck-card deck-card-1"></div>
         </div>
       </div>
 
@@ -358,19 +393,55 @@ onUnmounted(() => {
   50% { opacity: 1; }
 }
 
-.card-container.throwing .card-inner {
-  animation: throwCard 400ms ease-out forwards;
+.deck-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
 }
 
-@keyframes throwCard {
-  0% {
-    transform: rotateY(180deg) translateX(0) translateY(0) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: rotateY(180deg) translateX(120px) translateY(-80px) rotate(25deg);
-    opacity: 0;
-  }
+.deck-stack {
+  position: relative;
+  width: 60px;
+  height: 86px;
+}
+
+.deck-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--color-card-bg) 0%, var(--color-secondary-bg) 100%);
+  border: 2px solid var(--color-accent-primary);
+  transition: opacity 0.3s ease;
+}
+
+.deck-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border: 2px dashed var(--color-accent-primary);
+  border-radius: 50%;
+  opacity: 0.4;
+}
+
+.deck-card-1 {
+  transform: translateY(0) translateX(0);
+}
+
+.deck-card-2 {
+  transform: translateY(-4px) translateX(-2px);
+  opacity: 0.7;
+}
+
+.deck-card-3 {
+  transform: translateY(-8px) translateX(-4px);
+  opacity: 0.4;
 }
 
 .card-front {

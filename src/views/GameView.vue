@@ -14,6 +14,7 @@ const prefs = usePreferencesStore()
 const showEndModal = ref(false)
 const isThrowing = ref(false)
 const autoFlip = ref(localStorage.getItem('auto-flip') !== 'false')
+const showCategoryBadge = ref(false)
 const cardRef = ref<HTMLElement | null>(null)
 
 function toggleAutoFlip() {
@@ -37,6 +38,11 @@ function flipAndShow() {
   if (!game.isFlipped && cardRef.value) {
     cardRef.value.classList.add('flipped')
     game.flipCard()
+    
+    // Show category badge after flip animation completes
+    if (autoFlip.value) {
+      showCategoryBadge.value = true
+    }
   }
 }
 
@@ -44,6 +50,9 @@ function nextCard() {
   if (isThrowing.value || !cardRef.value) return
   isThrowing.value = true
 
+  // Hide category badge before throw animation
+  showCategoryBadge.value = false
+  
   // Reset flip state - new card starts face-down
   game.isFlipped = false
 
@@ -109,6 +118,9 @@ function nextCard() {
         cardContainer.classList.add('flipped')
         cardInner.classList.remove('animate-flip')
         game.flipCard()
+        
+        // Show category badge after flip animation completes
+        showCategoryBadge.value = true
       }
     }
     
@@ -189,7 +201,7 @@ onUnmounted(() => {
     <!-- Game Area -->
     <div class="game-area">
       <!-- Category indicator -->
-      <div v-if="currentCategory" class="category-badge" :style="{ background: currentCategory.color }">
+      <div v-if="currentCategory && showCategoryBadge" class="category-badge" :class="{ show: showCategoryBadge }" :style="{ background: currentCategory.color }">
         {{ currentCategory.icon }} {{ currentCategory.name }}
       </div>
 
@@ -367,6 +379,12 @@ onUnmounted(() => {
   font-size: 0.9rem;
   color: white;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.category-badge.show {
+  opacity: 1;
 }
 
 .card-container {

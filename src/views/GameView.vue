@@ -6,6 +6,7 @@ import { usePreferencesStore } from '@/stores/settings'
 import { CATEGORIES } from '@/types'
 import { ArrowLeft, Volume2, VolumeX, RefreshCw, X, Zap } from 'lucide-vue-next'
 import { animate } from 'animejs'
+import gsap from 'gsap'
 
 const router = useRouter()
 const game = useGameStore()
@@ -67,22 +68,27 @@ function nextCard() {
     // Wait for Vue to update DOM with new card, then flip
     if (autoFlip.value) {
       await nextTick()
-      // Longer delay + then flip via Vue reactivity
+      
       setTimeout(() => {
-        // Reset transform to ensure clean flip animation
-        if (cardRef.value) {
-          const cardInner = cardRef.value.querySelector('.card-inner') as HTMLElement
-          if (cardInner) {
-            cardInner.style.transition = 'none'
-            cardInner.style.transform = 'rotateY(0deg)'
-            // Force reflow
-            cardInner.offsetHeight
-            // Restore transition
-            cardInner.style.transition = ''
-          }
+        // Use GSAP to animate flip
+        const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
+        if (cardInner) {
+          // Reset to starting position
+          cardInner.style.transform = 'rotateY(0deg)'
+          
+          // Animate flip with GSAP
+          gsap.to(cardInner, {
+            rotationY: 180,
+            duration: 0.5,
+            ease: 'power2.inOut',
+            onComplete: () => {
+              game.flipCard()
+            }
+          })
+        } else {
+          game.flipCard()
         }
-        game.flipCard()
-      }, 200)
+      }, 150)
     }
     // autoFlip OFF: new card stays face-down
     

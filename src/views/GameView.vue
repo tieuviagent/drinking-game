@@ -63,9 +63,25 @@ function nextCard() {
     easing: 'easeOutQuad',
   }).then(() => {
     game.nextCard()
+    
     if (autoFlip.value) {
-      game.flipCard()
+      // Animate the flip with animejs for smooth transition
+      const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
+      if (cardInner) {
+        animate(cardInner, {
+          rotateY: [{ value: 90, duration: 150 }, { value: 180, duration: 300 }],
+          easing: 'easeOutQuad',
+        }).then(() => {
+          game.flipCard()
+          // Reset transform after flip
+          cardInner.style.transform = 'rotateY(180deg)'
+        })
+      } else {
+        game.flipCard()
+      }
     }
+    // autoFlip OFF: new card stays face-down (handled by game.nextCard() which sets isFlipped = false)
+    
     isThrowing.value = false
     if (cardRef.value) {
       cardRef.value.style.transform = 'translateX(0) translateY(0) rotate(0deg)'

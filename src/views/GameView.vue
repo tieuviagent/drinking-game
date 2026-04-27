@@ -11,6 +11,7 @@ const game = useGameStore()
 const prefs = usePreferencesStore()
 
 const showEndModal = ref(false)
+const isThrowing = ref(false)
 
 const currentCategory = computed(() => {
   if (!game.currentCard) return null
@@ -31,7 +32,12 @@ function flipAndShow() {
 }
 
 function nextCard() {
-  game.nextCard()
+  if (isThrowing.value) return
+  isThrowing.value = true
+  setTimeout(() => {
+    game.nextCard()
+    isThrowing.value = false
+  }, 400)
 }
 
 function reshuffle() {
@@ -51,6 +57,7 @@ function goSelect() {
 }
 
 function handleCardClick() {
+  if (isThrowing.value) return
   if (game.isFlipped) {
     nextCard()
   } else {
@@ -109,8 +116,8 @@ onUnmounted(() => {
       <!-- Card -->
       <div
         class="card-container"
+        :class="{ flipped: game.isFlipped, throwing: isThrowing }"
         :style="cardStyle"
-        :class="{ flipped: game.isFlipped }"
         @click="handleCardClick"
       >
         <div class="card-inner">
@@ -164,6 +171,7 @@ onUnmounted(() => {
       <button
         class="next-btn"
         :class="{ 'has-card': game.currentCard }"
+        :disabled="isThrowing"
         @click="handleCardClick"
       >
         {{ game.isFlipped ? 'LẬT LÁ BÀI TIẾP' : 'LẬT BÀI' }}
@@ -328,6 +336,21 @@ onUnmounted(() => {
   50% { opacity: 1; }
 }
 
+.card-container.throwing .card-inner {
+  animation: throwCard 400ms ease-out forwards;
+}
+
+@keyframes throwCard {
+  0% {
+    transform: rotateY(180deg) translateX(0) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: rotateY(180deg) translateX(120px) translateY(-80px) rotate(25deg);
+    opacity: 0;
+  }
+}
+
 .card-front {
   transform: rotateY(180deg);
   background: linear-gradient(135deg, #ffffff 0%, #f0f0ff 100%);
@@ -400,6 +423,11 @@ onUnmounted(() => {
 
 .next-btn:active {
   transform: translateY(0) scale(0.98);
+}
+
+.next-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .keyboard-hint {

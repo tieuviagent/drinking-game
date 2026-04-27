@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Category, Card } from '@/types'
 import { usePreferencesStore } from './settings'
 import * as coupleCards from '@/data/couple'
@@ -16,15 +16,54 @@ const CARD_IMPORTS = {
   hot: hotCards
 }
 
+const STORAGE_KEY = 'drinking-game-state'
+
 export const useGameStore = defineStore('game', () => {
   // Initialize preferences store (ensures it's loaded)
   usePreferencesStore()
+  
+  // Load persisted state
+  const loadPersistedState = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        currentDeck.value = parsed.currentDeck || []
+        currentCardIndex.value = parsed.currentCardIndex || 0
+        isFlipped.value = parsed.isFlipped || false
+        gameStarted.value = parsed.gameStarted || false
+      }
+    } catch (e) {
+      console.warn('Failed to load game state:', e)
+    }
+  }
+  
+  // Persist state to localStorage
+  const saveState = () => {
+    try {
+      const state = {
+        currentDeck: currentDeck.value,
+        currentCardIndex: currentCardIndex.value,
+        isFlipped: isFlipped.value,
+        gameStarted: gameStarted.value
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (e) {
+      console.warn('Failed to save game state:', e)
+    }
+  }
   
   // State
   const currentDeck = ref<Card[]>([])
   const currentCardIndex = ref(0)
   const isFlipped = ref(false)
   const gameStarted = ref(false)
+  
+  // Load persisted state on init
+  loadPersistedState()
+  
+  // Watch and persist state changes
+  watch([currentDeck, currentCardIndex, isFlipped, gameStarted], saveState, { deep: true })
   
   // Computed
   const currentCard = computed(() => {

@@ -44,6 +44,9 @@ function nextCard() {
   if (isThrowing.value || !cardRef.value) return
   isThrowing.value = true
 
+  // Reset flip state first to prevent CSS conflict
+  game.isFlipped = false
+
   animate(cardRef.value, {
     translateX: [
       { value: 150, duration: 200 },
@@ -70,18 +73,24 @@ function nextCard() {
       await nextTick()
       
       setTimeout(() => {
-        // Use GSAP to animate flip
+        // Use GSAP to animate flip from 0 -> 180
         const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
         if (cardInner) {
-          // Reset to starting position
+          // Temporarily disable CSS transition during GSAP animation
+          cardInner.style.transition = 'none'
           cardInner.style.transform = 'rotateY(0deg)'
           
+          // Force reflow
+          cardInner.offsetHeight
+            
           // Animate flip with GSAP
           gsap.to(cardInner, {
             rotationY: 180,
             duration: 0.5,
             ease: 'power2.inOut',
             onComplete: () => {
+              // Re-enable CSS transition for next flip
+              cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
               game.flipCard()
             }
           })

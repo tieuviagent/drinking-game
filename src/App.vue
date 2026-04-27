@@ -1,0 +1,15 @@
+<script setup lang="ts">
+import { RouterView } from 'vue-router'
+</script>
+
+<template>
+  <RouterView v-slot="{ Component, route }">
+    <transition name="page" mode="out-in">
+      <component :is="Component" :key="route.path" />
+    </transition>
+  </RouterView>
+</template>
+
+<style>
+/* App-level styles handled in main.css */
+</style>

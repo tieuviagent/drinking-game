@@ -64,27 +64,17 @@ function nextCard() {
   }).then(() => {
     game.nextCard()
     
-    // Wait for Vue to update DOM with new card, then animate flip
+    // Wait for Vue to update DOM with new card, then flip
     if (autoFlip.value) {
       requestAnimationFrame(() => {
-        // Get the NEW card element after Vue re-render
-        const newCardContainer = document.querySelector('.card-container') as HTMLElement
-        if (newCardContainer) {
-          const cardInner = newCardContainer.querySelector('.card-inner') as HTMLElement
-          if (cardInner) {
-            // Animate flip from 0 to 180
-            animate(cardInner, {
-              rotateY: [{ value: 0, duration: 0 }, { value: 90, duration: 150 }, { value: 180, duration: 300 }],
-              easing: 'easeOutQuad',
-            }).then(() => {
-              game.flipCard()
-            })
-          } else {
-            game.flipCard()
+        requestAnimationFrame(() => {
+          // Add flipped class to trigger CSS transition
+          const newCardContainer = document.querySelector('.card-container') as HTMLElement
+          if (newCardContainer) {
+            newCardContainer.classList.add('flipped')
           }
-        } else {
           game.flipCard()
-        }
+        })
       })
     }
     // autoFlip OFF: new card stays face-down

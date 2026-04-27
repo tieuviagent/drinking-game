@@ -34,7 +34,8 @@ const cardStyle = computed(() => {
 })
 
 function flipAndShow() {
-  if (!game.isFlipped) {
+  if (!game.isFlipped && cardRef.value) {
+    cardRef.value.classList.add('flipped')
     game.flipCard()
   }
 }
@@ -82,9 +83,9 @@ function nextCard() {
       const cardContainer = cardRef.value as HTMLElement
       const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
       if (cardContainer && cardInner) {
-        // Reset and trigger CSS animation
+        // Reset to face-down (remove flipped class, clear inline transform)
         cardContainer.classList.remove('flipped')
-        cardInner.style.transform = 'rotateY(0deg)'
+        cardInner.style.transform = ''
         
         // Force reflow
         void cardInner.offsetWidth
@@ -101,7 +102,10 @@ function nextCard() {
           cardInner.addEventListener('animationend', handler)
         })
         
-        // Set flipped state - add to container, not inner
+        // Animation done - clear inline transform, let CSS class handle it
+        cardInner.style.transform = ''
+        
+        // Set flipped state - add to container
         cardContainer.classList.add('flipped')
         cardInner.classList.remove('animate-flip')
         game.flipCard()

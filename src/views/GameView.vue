@@ -79,10 +79,11 @@ function nextCard() {
       
       await new Promise(resolve => setTimeout(resolve, 100))
       
+      const cardContainer = cardRef.value as HTMLElement
       const cardInner = cardRef.value?.querySelector('.card-inner') as HTMLElement
-      if (cardInner) {
+      if (cardContainer && cardInner) {
         // Reset and trigger CSS animation
-        cardInner.classList.remove('flipped')
+        cardContainer.classList.remove('flipped')
         cardInner.style.transform = 'rotateY(0deg)'
         
         // Force reflow
@@ -100,8 +101,8 @@ function nextCard() {
           cardInner.addEventListener('animationend', handler)
         })
         
-        // Set flipped state
-        cardInner.classList.add('flipped')
+        // Set flipped state - add to container, not inner
+        cardContainer.classList.add('flipped')
         cardInner.classList.remove('animate-flip')
         game.flipCard()
       }

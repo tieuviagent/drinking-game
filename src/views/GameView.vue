@@ -67,13 +67,10 @@ function nextCard() {
     // Wait for Vue to update DOM with new card, then flip
     if (autoFlip.value) {
       await nextTick()
-      // Small delay to ensure DOM is fully rendered
+      // Delay to allow DOM to render, then flip (Vue handles class)
       setTimeout(() => {
-        if (cardRef.value) {
-          cardRef.value.classList.add('flipped')
-        }
         game.flipCard()
-      }, 100)
+      }, 150)
     }
     // autoFlip OFF: new card stays face-down
     
